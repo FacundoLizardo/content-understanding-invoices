@@ -45,41 +45,51 @@ async function analyzeInvoice(buffer) {
 }
 
 /* ─────────────────── Limpia los campos del resultado ─────────────────── */
-function mapInvoiceFields(ar) {
-  const doc = ar?.documents?.[0];
-  if (!doc) throw new Error("Sin documento reconocido");
+function mapInvoiceFields(ar, minConfidence = 0.3) {
+  const docs = ar?.documents ?? [];
+  if (!docs.length) throw new Error("No se detectaron facturas");
 
-  const f = doc.fields;
   const money = (c) => c?.valueCurrency?.amount ?? null;
 
-  const itemsRaw = f.Items?.valueArray ?? [];
-  const items = itemsRaw.map((arrItem) => {
-    // algunos modelos devuelven directamente el objeto, otros lo envuelven
-    const it = arrItem?.valueObject ?? arrItem ?? {};
+  return docs.map((doc, idx) => {
+    const f = doc.fields;
+
+    const items = (f.Items?.valueArray ?? [])
+      // 1️⃣ filtra ítems con poca confianza
+      .filter((arrItem) => (arrItem.confidence ?? 1) >= minConfidence)
+      // 2️⃣ normaliza valueObject / objeto directo
+      .map((arrItem) => {
+        const it = arrItem.valueObject ?? arrItem ?? {};
+        return {
+          page:        arrItem.boundingRegions?.[0]?.pageNumber ?? null,
+          productCode: it.ProductCode?.content ?? null,
+          description: it.Description?.valueString ?? null,
+          quantity:    it.Quantity?.valueNumber ?? null,
+          date:        it.Date?.valueDate ?? null,
+          unit:        it.Unit?.valueNumber ?? null,
+          unitPrice:   money(it.UnitPrice),
+          tax:         money(it.Tax),
+          amount:      money(it.Amount),
+          rawContent:  arrItem.content              // útil para debug
+        };
+      });
+
     return {
-      productCode: it?.ProductCode?.content ?? null,
-      description: it?.Description?.valueString ?? null,
-      quantity:    it?.Quantity?.valueNumber ?? null,
-      date:        it?.Date?.valueDate ?? null,
-      unit:        it?.Unit?.valueNumber ?? null,
-      unitPrice:   money(it?.UnitPrice),
-      tax:         money(it?.Tax),
-      amount:      money(it?.Amount),
+      invoiceIndex: idx + 1,
+      pages: doc.spans?.map((s) => s.pageNumber) ?? [],
+      vendorName:   f.VendorName?.valueString ?? null,
+      customerName: f.CustomerName?.valueString ?? null,
+      invoiceDate:  f.InvoiceDate?.valueDate ?? null,
+      dueDate:      f.DueDate?.valueDate ?? null,
+      subtotal:     money(f.SubTotal),
+      previousBalance: money(f.PreviousUnpaidBalance),
+      tax:          money(f.TotalTax),
+      amountDue:    money(f.AmountDue),
+      items
     };
   });
-
-  return {
-    vendorName:      f.VendorName?.valueString ?? null,
-    customerName:    f.CustomerName?.valueString ?? null,
-    invoiceDate:     f.InvoiceDate?.valueDate ?? null,
-    dueDate:         f.DueDate?.valueDate ?? null,
-    subtotal:        money(f.SubTotal),
-    previousBalance: money(f.PreviousUnpaidBalance),
-    tax:             money(f.TotalTax),
-    amountDue:       money(f.AmountDue),
-    items,
-  };
 }
+
 
 
 /* ──────────────────────── Endpoint /invoice ──────────────────────────── */
