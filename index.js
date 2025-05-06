@@ -48,32 +48,39 @@ async function analyzeInvoice(buffer) {
 function mapInvoiceFields(ar) {
   const doc = ar?.documents?.[0];
   if (!doc) throw new Error("Sin documento reconocido");
+
   const f = doc.fields;
   const money = (c) => c?.valueCurrency?.amount ?? null;
 
-  const items = (f.Items?.valueArray ?? []).map(({ valueObject: it }) => ({
-    productCode: it.ProductCode?.content ?? null,
-    description: it.Description?.valueString ?? null,
-    quantity:    it.Quantity?.valueNumber ?? null,
-    date:        it.Date?.valueDate ?? null,
-    unit:        it.Unit?.valueNumber ?? null,
-    unitPrice:   money(it.UnitPrice),
-    tax:         money(it.Tax),
-    amount:      money(it.Amount),
-  }));
+  const itemsRaw = f.Items?.valueArray ?? [];
+  const items = itemsRaw.map((arrItem) => {
+    // algunos modelos devuelven directamente el objeto, otros lo envuelven
+    const it = arrItem?.valueObject ?? arrItem ?? {};
+    return {
+      productCode: it?.ProductCode?.content ?? null,
+      description: it?.Description?.valueString ?? null,
+      quantity:    it?.Quantity?.valueNumber ?? null,
+      date:        it?.Date?.valueDate ?? null,
+      unit:        it?.Unit?.valueNumber ?? null,
+      unitPrice:   money(it?.UnitPrice),
+      tax:         money(it?.Tax),
+      amount:      money(it?.Amount),
+    };
+  });
 
   return {
-    vendorName:       f.VendorName?.valueString ?? null,
-    customerName:     f.CustomerName?.valueString ?? null,
-    invoiceDate:      f.InvoiceDate?.valueDate ?? null,
-    dueDate:          f.DueDate?.valueDate ?? null,
-    subtotal:         money(f.SubTotal),
-    previousBalance:  money(f.PreviousUnpaidBalance),
-    tax:              money(f.TotalTax),
-    amountDue:        money(f.AmountDue),
+    vendorName:      f.VendorName?.valueString ?? null,
+    customerName:    f.CustomerName?.valueString ?? null,
+    invoiceDate:     f.InvoiceDate?.valueDate ?? null,
+    dueDate:         f.DueDate?.valueDate ?? null,
+    subtotal:        money(f.SubTotal),
+    previousBalance: money(f.PreviousUnpaidBalance),
+    tax:             money(f.TotalTax),
+    amountDue:       money(f.AmountDue),
     items,
   };
 }
+
 
 /* ──────────────────────── Endpoint /invoice ──────────────────────────── */
 app.post("/invoice", upload.single("file"), async (req, res) => {
