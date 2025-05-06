@@ -1,0 +1,44 @@
+# ───── Node / NPM ─────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ───── Archivos de entorno y config sensibles ────────────────
+.env
+.env.*.local
+*.env.*
+
+# ───── Salida de compilación / cobertura ─────────────────────
+dist/
+build/
+out/
+coverage/
+.nyc_output/
+
+# ───── Logs y datos de runtime ───────────────────────────────
+logs/
+*.log
+pids/
+*.pid
+*.pid.lock
+
+# ───── Cachés de herramientas ────────────────────────────────
+.cache/
+.next/
+.vercel/
+vite-cache/
+eslintcache
+
+# ───── IDE / Editor ──────────────────────────────────────────
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ───── Archivos de sistema ───────────────────────────────────
+.DS_Store
+Thumbs.db
