@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  api:
+    image: facundolizardo/document-inteligence-invoices:latest
+    ports:
+      - "3000:3000"
+    env_file:          # ← anidado dentro del servicio
+      - .env           # .env debe estar junto al compose
+    environment:       # sobrescribe o complementa
+      AZURE_ENDPOINT: ${AZURE_ENDPOINT}
+      AZURE_KEY: ${AZURE_KEY}

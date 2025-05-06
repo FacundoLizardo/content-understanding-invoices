@@ -23,7 +23,7 @@ async function main() {
 
     const client = DocumentIntelligence(endpoint, {key:key});
     const initialResponse = await client
-        .path("/documentModels/{modelId}:analyze", "prebuilt-invoice")
+        .path("/documentModels/prebuilt-invoice:analyze", "prebuilt-invoice")
         .post({
         contentType: "application/json",
         body: {
