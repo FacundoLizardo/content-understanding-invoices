@@ -97,12 +97,12 @@ function mapInvoiceFields(ar, minConfidence = 0.3) {
       totalTax:           money(f.TotalTax ?? null),
       previousBalance:    money(f.PreviousUnpaidBalance ?? null),
       amountDue:          money(f.AmountDue ?? null),
-      currency:           text(f.TaxDetails?.valueArray?.[0]?.valueObject?.Amount?.valueCurrency?.currencyCode ?? null),
+      currency:           f.TaxDetails?.valueArray?.[0]?.valueObject?.Amount?.valueCurrency?.currencyCode ?? null,
       /* --- Ítems ──────────────────────────────── */
       items,
       /* --- Otros (opcional) --------------------- */
-      invoicedNumber:     text(f.Invoiced ?? null),         
-      taxDetails:         f.TaxDetails?.valueArray ?? []
+      invoicedNumber:     text(f.Invoiced ?? null),
+      taxDetails:         f.TaxDetails?.valueArray ?? null,
     };
   });
 }
