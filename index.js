@@ -55,6 +55,8 @@ function mapInvoiceFields(ar, minConfidence = 0.3) {
   return docs.map((doc, idx) => {
     const f = doc.fields ?? {};
 
+    console.log(f.TaxDetails?.valueArray?.[0]?.valueObject?.Amount?.valueCurrency?.currencyCode);
+
     /* ───────── Items ───────── */
     const items = (f.Items?.valueArray ?? [])
       .filter((it) => (it.confidence ?? 1) >= minConfidence)
@@ -95,16 +97,15 @@ function mapInvoiceFields(ar, minConfidence = 0.3) {
       totalTax:           money(f.TotalTax ?? null),
       previousBalance:    money(f.PreviousUnpaidBalance ?? null),
       amountDue:          money(f.AmountDue ?? null),
-      currency:           text(f.TaxDetails[0].valueObject.Amount.valueCurrency.currencyCode ?? null),
+      currency:           text(f.TaxDetails?.valueArray?.[0]?.valueObject?.Amount?.valueCurrency?.currencyCode ?? null),
       /* --- Ítems ──────────────────────────────── */
       items,
       /* --- Otros (opcional) --------------------- */
-      invoicedNumber:     text(f.Invoiced ?? null),           
+      invoicedNumber:     text(f.Invoiced ?? null),         
       taxDetails:         f.TaxDetails?.valueArray ?? []
     };
   });
 }
-
 
 
 /* ──────────────────────── Endpoint /invoice ──────────────────────────── */
