@@ -95,6 +95,7 @@ function mapInvoiceFields(ar, minConfidence = 0.3) {
       totalTax:           money(f.TotalTax ?? null),
       previousBalance:    money(f.PreviousUnpaidBalance ?? null),
       amountDue:          money(f.AmountDue ?? null),
+      currency:           text(f.TaxDetails[0].valueObject.Amount.valueCurrency.currencyCode ?? null),
       /* --- Ítems ──────────────────────────────── */
       items,
       /* --- Otros (opcional) --------------------- */
@@ -103,7 +104,6 @@ function mapInvoiceFields(ar, minConfidence = 0.3) {
     };
   });
 }
-
 
 
 
