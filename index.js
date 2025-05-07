@@ -50,45 +50,60 @@ function mapInvoiceFields(ar, minConfidence = 0.3) {
   if (!docs.length) throw new Error("No se detectaron facturas");
 
   const money = (c) => c?.valueCurrency?.amount ?? null;
+  const text  = (t) => t?.content ?? t?.valueString ?? null;
 
   return docs.map((doc, idx) => {
-    const f = doc.fields;
+    const f = doc.fields ?? {};
 
+    /* ───────── Items ───────── */
     const items = (f.Items?.valueArray ?? [])
-      // 1️⃣ filtra ítems con poca confianza
-      .filter((arrItem) => (arrItem.confidence ?? 1) >= minConfidence)
-      // 2️⃣ normaliza valueObject / objeto directo
+      .filter((it) => (it.confidence ?? 1) >= minConfidence)
       .map((arrItem) => {
         const it = arrItem.valueObject ?? arrItem ?? {};
         return {
           page:        arrItem.boundingRegions?.[0]?.pageNumber ?? null,
-          productCode: it.ProductCode?.content ?? null,
-          description: it.Description?.valueString ?? null,
+          productCode: text(it.ProductCode),
+          description: text(it.Description),
           quantity:    it.Quantity?.valueNumber ?? null,
           date:        it.Date?.valueDate ?? null,
           unit:        it.Unit?.valueNumber ?? null,
           unitPrice:   money(it.UnitPrice),
           tax:         money(it.Tax),
           amount:      money(it.Amount),
-          rawContent:  arrItem.content              // útil para debug
+          rawContent:  arrItem.content
         };
       });
 
+    /* ───────── Factura ─────── */
     return {
-      invoiceIndex: idx + 1,
-      pages: doc.spans?.map((s) => s.pageNumber) ?? [],
-      vendorName:   f.VendorName?.valueString ?? null,
-      customerName: f.CustomerName?.valueString ?? null,
-      invoiceDate:  f.InvoiceDate?.valueDate ?? null,
-      dueDate:      f.DueDate?.valueDate ?? null,
-      subtotal:     money(f.SubTotal),
-      previousBalance: money(f.PreviousUnpaidBalance),
-      tax:          money(f.TotalTax),
-      amountDue:    money(f.AmountDue),
-      items
+      invoiceIndex:       idx + 1,
+      pages:              doc.boundingRegions?.map((b) => b.pageNumber) ?? [],
+      /* --- Cabecera ────────────────────────────── */
+      vendorName:         text(f.VendorName ?? null),
+      vendorTaxId:        text(f.VendorTaxId ?? null),
+      vendorAddress:      text(f.VendorAddressRecipient ?? null),
+      customerName:       text(f.CustomerName ?? null),
+      customerId:         text(f.CustomerId ?? null),
+      customerTaxId:      text(f.CustomerTaxId ?? null),
+      customerAddress:    text(f.CustomerAddress ?? null),
+      /* --- Fechas ─────────────────────────────── */
+      invoiceDate:        f.InvoiceDate?.valueDate ?? null,
+      dueDate:            f.DueDate?.valueDate ?? null,
+      /* --- Totales ────────────────────────────── */
+      subtotal:           money(f.SubTotal ?? null),
+      invoiceTotal:       money(f.InvoiceTotal ?? null),     
+      totalTax:           money(f.TotalTax ?? null),
+      previousBalance:    money(f.PreviousUnpaidBalance ?? null),
+      amountDue:          money(f.AmountDue ?? null),
+      /* --- Ítems ──────────────────────────────── */
+      items,
+      /* --- Otros (opcional) --------------------- */
+      invoicedNumber:     text(f.Invoiced ?? null),           
+      taxDetails:         f.TaxDetails?.valueArray ?? []
     };
   });
 }
+
 
 
 
